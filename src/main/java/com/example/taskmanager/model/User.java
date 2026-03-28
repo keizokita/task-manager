@@ -31,7 +31,7 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserRole role = UserRole.USER;
+    private UserRole role = UserRole.MEMBER;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -1,7 +1,7 @@
 package com.example.taskmanager.model.enums;
 
 public enum UserRole {
-    USER("ROLE_USER"),
+    MEMBER("ROLE_MEMBER"),
     ADMIN("ROLE_ADMIN");
 
     private final String authority;
