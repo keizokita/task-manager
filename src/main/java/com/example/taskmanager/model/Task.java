@@ -46,6 +46,10 @@ public class Task {
     @JoinColumn(name = "responsible_id")
     private User responsible;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id")
+    private Project project;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
