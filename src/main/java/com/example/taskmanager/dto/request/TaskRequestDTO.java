@@ -21,5 +21,7 @@ public record TaskRequestDTO(
 
         LocalDateTime deadline,
 
-        Long responsibleId
+        Long responsibleId,
+
+        Long projectId
 ) {}

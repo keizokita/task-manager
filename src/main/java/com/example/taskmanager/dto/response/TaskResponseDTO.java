@@ -15,7 +15,8 @@ public record TaskResponseDTO(
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         LocalDateTime deadline,
-        ResponsibleDTO responsible
+        ResponsibleDTO responsible,
+        Long projectId
 ) {
     public record ResponsibleDTO(Long id, String email) {}
 
@@ -33,7 +34,8 @@ public record TaskResponseDTO(
                 task.getCreatedAt(),
                 task.getUpdatedAt(),
                 task.getDeadline(),
-                responsible
+                responsible,
+                task.getProject() != null ? task.getProject().getId() : null
         );
     }
 }

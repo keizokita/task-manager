@@ -1,14 +1,20 @@
 package com.example.taskmanager.controller;
 
+import com.example.taskmanager.dto.request.TaskFilterDTO;
 import com.example.taskmanager.dto.request.TaskRequestDTO;
 import com.example.taskmanager.dto.response.TaskResponseDTO;
+import com.example.taskmanager.model.enums.TaskPriority;
+import com.example.taskmanager.model.enums.TaskStatus;
 import com.example.taskmanager.service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -24,8 +30,26 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TaskResponseDTO>> findAll() {
-        return ResponseEntity.ok(taskService.findAll());
+    public ResponseEntity<Page<TaskResponseDTO>> findAll(
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) TaskPriority priority,
+            @RequestParam(required = false) LocalDateTime deadlineFrom,
+            @RequestParam(required = false) LocalDateTime deadlineTo,
+            Pageable pageable) {
+        var filter = new TaskFilterDTO(status, priority, deadlineFrom, deadlineTo);
+        return ResponseEntity.ok(taskService.findAll(filter, pageable));
+    }
+
+    @GetMapping("/reports")
+    public ResponseEntity<?> getReport() {
+        return ResponseEntity.ok(taskService.getReport());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<TaskResponseDTO>> search(
+            @RequestParam String q,
+            Pageable pageable) {
+        return ResponseEntity.ok(taskService.search(q, pageable));
     }
 
     @GetMapping("/{id}")
