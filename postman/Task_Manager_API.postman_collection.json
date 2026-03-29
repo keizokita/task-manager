@@ -1,0 +1,655 @@
+{
+	"info": {
+		"_postman_id": "task-manager-collection",
+		"name": "Task Manager API",
+		"description": "Collection completa para validar os 6 requisitos do Task Manager.\n\nPRE-REQUISITOS:\n1. PostgreSQL rodando com banco 'task_manager'\n2. Aplicacao rodando na porta 8080\n3. Executar os requests NA ORDEM (Req1 -> Req2 -> ... -> Req6)\n4. Apos 1.2, executar no banco:\n   UPDATE users SET role = 'ADMIN' WHERE email = 'admin@test.com';\n   SELECT id, email, role FROM users;\n5. Copiar os IDs para as variaveis adminId e memberId na aba Variables",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [""]
+			}
+		}
+	],
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8080" },
+		{ "key": "adminToken", "value": "" },
+		{ "key": "memberToken", "value": "" },
+		{ "key": "adminId", "value": "PREENCHER_APOS_REGISTRO" },
+		{ "key": "memberId", "value": "PREENCHER_APOS_REGISTRO" },
+		{ "key": "projectId", "value": "" },
+		{ "key": "taskId", "value": "" },
+		{ "key": "criticalTaskId", "value": "" }
+	],
+	"item": [
+		{
+			"name": "Req 1 - Auth & RBAC",
+			"item": [
+				{
+					"name": "1.1 Registrar ADMIN",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Registro deve retornar 200', function () {",
+						"    pm.response.to.have.status(200);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@test.com\",\n  \"password\": \"senha123\"\n}" },
+						"url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+					}
+				},
+				{
+					"name": "1.2 Registrar MEMBER",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Registro deve retornar 200', function () {",
+						"    pm.response.to.have.status(200);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n  \"email\": \"member@test.com\",\n  \"password\": \"senha123\"\n}" },
+						"url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+						"description": "APOS ESTE REQUEST, execute no banco:\n\nUPDATE users SET role = 'ADMIN' WHERE email = 'admin@test.com';\nSELECT id, email, role FROM users;\n\nCopie os IDs e preencha as variaveis adminId e memberId na aba Variables da collection."
+					}
+				},
+				{
+					"name": "1.3 Login ADMIN",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Login deve retornar 200 com token', function () {",
+						"    pm.response.to.have.status(200);",
+						"    var json = pm.response.json();",
+						"    pm.expect(json.token).to.be.a('string').and.not.empty;",
+						"    pm.collectionVariables.set('adminToken', json.token);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@test.com\",\n  \"password\": \"senha123\"\n}" },
+						"url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+					}
+				},
+				{
+					"name": "1.4 Login MEMBER",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Login deve retornar 200 com token', function () {",
+						"    pm.response.to.have.status(200);",
+						"    var json = pm.response.json();",
+						"    pm.expect(json.token).to.be.a('string').and.not.empty;",
+						"    pm.collectionVariables.set('memberToken', json.token);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n  \"email\": \"member@test.com\",\n  \"password\": \"senha123\"\n}" },
+						"url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+					}
+				},
+				{
+					"name": "1.5 Registro duplicado deve falhar",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Registro duplicado deve retornar 400', function () {",
+						"    pm.response.to.have.status(400);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@test.com\",\n  \"password\": \"senha123\"\n}" },
+						"url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+					}
+				},
+				{
+					"name": "1.6 Login senha errada deve falhar",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Login invalido deve retornar 403', function () {",
+						"    pm.response.to.have.status(403);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@test.com\",\n  \"password\": \"errada\"\n}" },
+						"url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+					}
+				},
+				{
+					"name": "1.7 Acesso sem token deve falhar",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Sem token deve retornar 403', function () {",
+						"    pm.response.to.have.status(403);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/projects", "host": ["{{baseUrl}}"], "path": ["projects"] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Req 2 - Gestao de Projetos",
+			"item": [
+				{
+					"name": "2.1 Criar projeto",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Criar projeto deve retornar 201', function () {",
+						"    pm.response.to.have.status(201);",
+						"    var json = pm.response.json();",
+						"    pm.expect(json.name).to.eql('Projeto Alpha');",
+						"    pm.collectionVariables.set('projectId', json.id);",
+						"    pm.collectionVariables.set('adminId', json.ownerId);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": { "mode": "raw", "raw": "{\n  \"name\": \"Projeto Alpha\",\n  \"description\": \"Projeto principal de teste\"\n}" },
+						"url": { "raw": "{{baseUrl}}/projects", "host": ["{{baseUrl}}"], "path": ["projects"] }
+					}
+				},
+				{
+					"name": "2.2 Criar projeto sem nome deve falhar",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Sem nome deve retornar 400', function () {",
+						"    pm.response.to.have.status(400);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": { "mode": "raw", "raw": "{\n  \"name\": \"\",\n  \"description\": \"sem nome\"\n}" },
+						"url": { "raw": "{{baseUrl}}/projects", "host": ["{{baseUrl}}"], "path": ["projects"] }
+					}
+				},
+				{
+					"name": "2.3 Listar projetos",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Listar deve retornar 200 com array', function () {",
+						"    pm.response.to.have.status(200);",
+						"    pm.expect(pm.response.json()).to.be.an('array').and.not.empty;",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"url": { "raw": "{{baseUrl}}/projects", "host": ["{{baseUrl}}"], "path": ["projects"] }
+					}
+				},
+				{
+					"name": "2.4 Buscar projeto por ID",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Buscar deve retornar 200', function () {",
+						"    pm.response.to.have.status(200);",
+						"    pm.expect(pm.response.json().name).to.eql('Projeto Alpha');",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}"] }
+					}
+				},
+				{
+					"name": "2.5 Buscar projeto inexistente",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Inexistente deve retornar 404', function () {",
+						"    pm.response.to.have.status(404);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"url": { "raw": "{{baseUrl}}/projects/99999", "host": ["{{baseUrl}}"], "path": ["projects", "99999"] }
+					}
+				},
+				{
+					"name": "2.6 Adicionar membro ao projeto",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Adicionar membro deve retornar 200', function () {",
+						"    pm.response.to.have.status(200);",
+						"    var json = pm.response.json();",
+						"    pm.expect(json.memberIds.length).to.be.at.least(2);",
+						"    // Capturar memberId do response (o que NAO e o adminId)",
+						"    var adminId = pm.collectionVariables.get('adminId');",
+						"    var ids = json.memberIds.filter(function(id) { return id != adminId; });",
+						"    if (ids.length > 0) pm.collectionVariables.set('memberId', ids[0]);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": { "mode": "raw", "raw": "{\n  \"userId\": {{memberId}}\n}" },
+						"url": { "raw": "{{baseUrl}}/projects/{{projectId}}/members", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}", "members"] }
+					}
+				},
+				{
+					"name": "2.7 Adicionar membro duplicado deve falhar",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Duplicado deve retornar 409', function () {",
+						"    pm.response.to.have.status(409);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": { "mode": "raw", "raw": "{\n  \"userId\": {{memberId}}\n}" },
+						"url": { "raw": "{{baseUrl}}/projects/{{projectId}}/members", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}", "members"] }
+					}
+				},
+				{
+					"name": "2.8 Remover owner deve falhar",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Remover owner deve retornar 403', function () {",
+						"    pm.response.to.have.status(403);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"url": { "raw": "{{baseUrl}}/projects/{{projectId}}/members/{{adminId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}", "members", "{{adminId}}"] }
+					}
+				},
+				{
+					"name": "2.9 MEMBER nao pode deletar projeto",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('MEMBER deletar deve retornar 403', function () {",
+						"    pm.response.to.have.status(403);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+						"url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects", "{{projectId}}"] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Req 3 - Regras de Tarefas",
+			"item": [
+				{
+					"name": "3.1 Criar tarefa TODO",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Criar tarefa deve retornar 201', function () {",
+						"    pm.response.to.have.status(201);",
+						"    var json = pm.response.json();",
+						"    pm.expect(json.status).to.eql('TODO');",
+						"    pm.collectionVariables.set('taskId', json.id);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": { "mode": "raw", "raw": "{\n  \"title\": \"Tarefa de teste\",\n  \"description\": \"Descricao da tarefa\",\n  \"priority\": \"LOW\",\n  \"projectId\": {{projectId}},\n  \"responsibleId\": {{adminId}}\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks", "host": ["{{baseUrl}}"], "path": ["tasks"] }
+					}
+				},
+				{
+					"name": "3.2 TODO -> IN_PROGRESS (permitido)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('TODO -> IN_PROGRESS deve retornar 200', function () {",
+						"    pm.response.to.have.status(200);",
+						"    pm.expect(pm.response.json().status).to.eql('IN_PROGRESS');",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}"] }
+					}
+				},
+				{
+					"name": "3.3 IN_PROGRESS -> DONE (permitido)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('IN_PROGRESS -> DONE deve retornar 200', function () {",
+						"    pm.response.to.have.status(200);",
+						"    pm.expect(pm.response.json().status).to.eql('DONE');",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": { "mode": "raw", "raw": "{\n  \"status\": \"DONE\"\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}"] }
+					}
+				},
+				{
+					"name": "3.4 TRAVA: DONE -> TODO (BLOQUEADO)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('DONE -> TODO deve retornar 422', function () {",
+						"    pm.response.to.have.status(422);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": { "mode": "raw", "raw": "{\n  \"status\": \"TODO\"\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}"] }
+					}
+				},
+				{
+					"name": "3.5 DONE -> IN_PROGRESS (permitido)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('DONE -> IN_PROGRESS deve retornar 200', function () {",
+						"    pm.response.to.have.status(200);",
+						"    pm.expect(pm.response.json().status).to.eql('IN_PROGRESS');",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}"] }
+					}
+				},
+				{
+					"name": "3.6 Criar tarefa CRITICAL",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Criar CRITICAL deve retornar 201', function () {",
+						"    pm.response.to.have.status(201);",
+						"    pm.collectionVariables.set('criticalTaskId', pm.response.json().id);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": { "mode": "raw", "raw": "{\n  \"title\": \"Tarefa Critica\",\n  \"priority\": \"CRITICAL\",\n  \"status\": \"IN_PROGRESS\",\n  \"projectId\": {{projectId}},\n  \"responsibleId\": {{memberId}}\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks", "host": ["{{baseUrl}}"], "path": ["tasks"] }
+					}
+				},
+				{
+					"name": "3.7 TRAVA: MEMBER concluir CRITICAL (BLOQUEADO)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('MEMBER concluir CRITICAL deve retornar 403', function () {",
+						"    pm.response.to.have.status(403);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{memberToken}}" }
+						],
+						"body": { "mode": "raw", "raw": "{\n  \"status\": \"DONE\"\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks/{{criticalTaskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{criticalTaskId}}"] }
+					}
+				},
+				{
+					"name": "3.8 ADMIN concluir CRITICAL (permitido)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('ADMIN concluir CRITICAL deve retornar 200', function () {",
+						"    pm.response.to.have.status(200);",
+						"    pm.expect(pm.response.json().status).to.eql('DONE');",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": { "mode": "raw", "raw": "{\n  \"status\": \"DONE\"\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks/{{criticalTaskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{criticalTaskId}}"] }
+					}
+				},
+				{
+					"name": "3.9 WIP 1/5",
+					"event": [{ "listen": "test", "script": { "exec": ["pm.test('WIP 1/5', function () { pm.response.to.have.status(201); });"], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"body": { "mode": "raw", "raw": "{\n  \"title\": \"WIP 1\",\n  \"priority\": \"MEDIUM\",\n  \"status\": \"IN_PROGRESS\",\n  \"projectId\": {{projectId}},\n  \"responsibleId\": {{memberId}}\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks", "host": ["{{baseUrl}}"], "path": ["tasks"] }
+					}
+				},
+				{
+					"name": "3.10 WIP 2/5",
+					"event": [{ "listen": "test", "script": { "exec": ["pm.test('WIP 2/5', function () { pm.response.to.have.status(201); });"], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"body": { "mode": "raw", "raw": "{\n  \"title\": \"WIP 2\",\n  \"priority\": \"MEDIUM\",\n  \"status\": \"IN_PROGRESS\",\n  \"projectId\": {{projectId}},\n  \"responsibleId\": {{memberId}}\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks", "host": ["{{baseUrl}}"], "path": ["tasks"] }
+					}
+				},
+				{
+					"name": "3.11 WIP 3/5",
+					"event": [{ "listen": "test", "script": { "exec": ["pm.test('WIP 3/5', function () { pm.response.to.have.status(201); });"], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"body": { "mode": "raw", "raw": "{\n  \"title\": \"WIP 3\",\n  \"priority\": \"MEDIUM\",\n  \"status\": \"IN_PROGRESS\",\n  \"projectId\": {{projectId}},\n  \"responsibleId\": {{memberId}}\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks", "host": ["{{baseUrl}}"], "path": ["tasks"] }
+					}
+				},
+				{
+					"name": "3.12 WIP 4/5",
+					"event": [{ "listen": "test", "script": { "exec": ["pm.test('WIP 4/5', function () { pm.response.to.have.status(201); });"], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"body": { "mode": "raw", "raw": "{\n  \"title\": \"WIP 4\",\n  \"priority\": \"MEDIUM\",\n  \"status\": \"IN_PROGRESS\",\n  \"projectId\": {{projectId}},\n  \"responsibleId\": {{memberId}}\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks", "host": ["{{baseUrl}}"], "path": ["tasks"] }
+					}
+				},
+				{
+					"name": "3.13 WIP 5/5 (ultimo permitido)",
+					"event": [{ "listen": "test", "script": { "exec": ["pm.test('WIP 5/5', function () { pm.response.to.have.status(201); });"], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"body": { "mode": "raw", "raw": "{\n  \"title\": \"WIP 5\",\n  \"priority\": \"MEDIUM\",\n  \"status\": \"IN_PROGRESS\",\n  \"projectId\": {{projectId}},\n  \"responsibleId\": {{memberId}}\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks", "host": ["{{baseUrl}}"], "path": ["tasks"] }
+					}
+				},
+				{
+					"name": "3.14 WIP 6 DEVE FALHAR",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('WIP 6/5 deve retornar 422', function () {",
+						"    pm.response.to.have.status(422);",
+						"    pm.expect(pm.response.json().title).to.include('WIP');",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"body": { "mode": "raw", "raw": "{\n  \"title\": \"WIP 6 DEVE FALHAR\",\n  \"priority\": \"MEDIUM\",\n  \"status\": \"IN_PROGRESS\",\n  \"projectId\": {{projectId}},\n  \"responsibleId\": {{memberId}}\n}" },
+						"url": { "raw": "{{baseUrl}}/tasks", "host": ["{{baseUrl}}"], "path": ["tasks"] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Req 4 - Filtros & Paginacao",
+			"item": [
+				{
+					"name": "4.1 Listar paginado",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Paginado deve retornar 200 com content', function () {",
+						"    pm.response.to.have.status(200);",
+						"    var json = pm.response.json();",
+						"    pm.expect(json.content).to.be.an('array');",
+						"    pm.expect(json).to.have.property('totalElements');",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"url": { "raw": "{{baseUrl}}/tasks?page=0&size=10", "host": ["{{baseUrl}}"], "path": ["tasks"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "10" }] }
+					}
+				},
+				{
+					"name": "4.2 Filtrar por status IN_PROGRESS",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Filtro status deve retornar apenas IN_PROGRESS', function () {",
+						"    pm.response.to.have.status(200);",
+						"    pm.response.json().content.forEach(function(t) {",
+						"        pm.expect(t.status).to.eql('IN_PROGRESS');",
+						"    });",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"url": { "raw": "{{baseUrl}}/tasks?status=IN_PROGRESS", "host": ["{{baseUrl}}"], "path": ["tasks"], "query": [{ "key": "status", "value": "IN_PROGRESS" }] }
+					}
+				},
+				{
+					"name": "4.3 Filtrar por prioridade CRITICAL",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Filtro prioridade deve retornar apenas CRITICAL', function () {",
+						"    pm.response.to.have.status(200);",
+						"    pm.response.json().content.forEach(function(t) {",
+						"        pm.expect(t.priority).to.eql('CRITICAL');",
+						"    });",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"url": { "raw": "{{baseUrl}}/tasks?priority=CRITICAL", "host": ["{{baseUrl}}"], "path": ["tasks"], "query": [{ "key": "priority", "value": "CRITICAL" }] }
+					}
+				},
+				{
+					"name": "4.4 Ordenar por prioridade desc",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Ordenacao deve retornar 200', function () {",
+						"    pm.response.to.have.status(200);",
+						"    pm.expect(pm.response.json().content).to.be.an('array');",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"url": { "raw": "{{baseUrl}}/tasks?sort=priority,desc", "host": ["{{baseUrl}}"], "path": ["tasks"], "query": [{ "key": "sort", "value": "priority,desc" }] }
+					}
+				},
+				{
+					"name": "4.5 Paginacao size=2",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Size=2 deve retornar no maximo 2 itens', function () {",
+						"    pm.response.to.have.status(200);",
+						"    pm.expect(pm.response.json().content.length).to.be.at.most(2);",
+						"    pm.expect(pm.response.json().size).to.eql(2);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"url": { "raw": "{{baseUrl}}/tasks?page=0&size=2", "host": ["{{baseUrl}}"], "path": ["tasks"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "2" }] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Req 5 - Busca Textual",
+			"item": [
+				{
+					"name": "5.1 Buscar por 'WIP'",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Busca WIP deve retornar resultados', function () {",
+						"    pm.response.to.have.status(200);",
+						"    pm.expect(pm.response.json().content.length).to.be.above(0);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"url": { "raw": "{{baseUrl}}/tasks/search?q=WIP", "host": ["{{baseUrl}}"], "path": ["tasks", "search"], "query": [{ "key": "q", "value": "WIP" }] }
+					}
+				},
+				{
+					"name": "5.2 Busca case-insensitive 'critica'",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Busca case-insensitive deve retornar resultados', function () {",
+						"    pm.response.to.have.status(200);",
+						"    pm.expect(pm.response.json().content.length).to.be.above(0);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"url": { "raw": "{{baseUrl}}/tasks/search?q=critica", "host": ["{{baseUrl}}"], "path": ["tasks", "search"], "query": [{ "key": "q", "value": "critica" }] }
+					}
+				},
+				{
+					"name": "5.3 Busca sem resultado",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Busca inexistente deve retornar vazio', function () {",
+						"    pm.response.to.have.status(200);",
+						"    pm.expect(pm.response.json().content.length).to.eql(0);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"url": { "raw": "{{baseUrl}}/tasks/search?q=xyzabc123", "host": ["{{baseUrl}}"], "path": ["tasks", "search"], "query": [{ "key": "q", "value": "xyzabc123" }] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Req 6 - Relatorios",
+			"item": [
+				{
+					"name": "6.1 Relatorio de contadores",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Relatorio deve retornar 200 com estrutura completa', function () {",
+						"    pm.response.to.have.status(200);",
+						"    var json = pm.response.json();",
+						"    pm.expect(json).to.have.property('byStatus');",
+						"    pm.expect(json).to.have.property('byPriority');",
+						"    pm.expect(json).to.have.property('total');",
+						"    pm.expect(json.total).to.be.above(0);",
+						"    pm.expect(json.byStatus).to.have.property('IN_PROGRESS');",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+						"url": { "raw": "{{baseUrl}}/tasks/reports", "host": ["{{baseUrl}}"], "path": ["tasks", "reports"] }
+					}
+				}
+			]
+		}
+	]
+}
